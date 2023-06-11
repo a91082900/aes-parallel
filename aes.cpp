@@ -100,7 +100,7 @@ void rotWord(unsigned char *word) {
 }
 
 void subWord(unsigned char *word) {
-    #pragma unroll
+    #pragma GCC unroll 4
     for(int i = 0; i < 4; i++) {
         word[i] = sbox[word[i]];
     }
@@ -123,7 +123,7 @@ void keyExpansion(unsigned char* key, unsigned char* w) {
             subWord(tmp);
             tmp[0] ^= rc[i / 16]; // rcon[1..3] = 0
         }
-        #pragma unroll
+        #pragma GCC unroll 4
         for(int j = 0; j < 4; j++) {
             w[i + j] = w[i - 16 + j] ^ tmp[j];
         }
@@ -142,7 +142,7 @@ void keyExpansion(unsigned char* key, unsigned char* w) {
 }
 
 void invSubBytes(unsigned char* state) {
-    #pragma unroll
+    #pragma GCC unroll 16
     for(int i = 0; i < 16; i++) {
         state[i] = inv_sbox[state[i]];
     }
@@ -194,7 +194,7 @@ void invMixColumns(unsigned char* state) {
         tmp[i] = state[i];
     }
 
-    #pragma unroll
+    #pragma GCC unroll 4
     for(int i = 0; i < 4; i++) {
         state[4*i + 0] = GF_14[tmp[4*i + 0]] ^ GF_11[tmp[4*i + 1]] ^ GF_13[tmp[4*i + 2]] ^ GF_9[tmp[4*i + 3]];
         state[4*i + 1] = GF_9[tmp[4*i + 0]] ^ GF_14[tmp[4*i + 1]] ^ GF_11[tmp[4*i + 2]] ^ GF_13[tmp[4*i + 3]];
@@ -344,7 +344,7 @@ void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     int full_block_size = size - size % 16;
 
     if(p < full_block_size) {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             in[j] ^= iv[j];
         }
@@ -352,20 +352,20 @@ void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         p += 16;
     }
     for(; p < full_block_size; p += 16) {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             in[p + j] ^= out[p + j - 16];
         }
         encryptBlock(in + p, out + p, w);
     }
     if(full_block_size) {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             last_block[j] ^= out[p + j - 16];
         }
     }
     else {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             last_block[j] ^= iv[j];
         }
@@ -393,7 +393,7 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     int p = 0;
     if(p < full_block_size) {
         decryptBlock(in, out, w);
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             out[j] ^= iv[j];
         }
@@ -401,20 +401,20 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     }
     for(; p < full_block_size; p += 16) {
         decryptBlock(in + p, out + p, w);
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             out[p + j] ^= in[p - 16 + j];
         }
     }
     decryptBlock(in + p, out + p, w);
     if(full_block_size) {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             out[p + j] ^= in[p - 16 + j];
         }
     }
     else {
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
             out[j] ^= iv[j];    
         }
@@ -447,23 +447,30 @@ void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         counter[i] = nonce[i];
     }
 
-    int p = 0;
-    for(; p < size; p += 16) {
+    #pragma omp parallel for firstprivate(counter)
+    for(int p = 0; p < size; p += 16) {
+        int idx = 15;
+        int ctr = p >> 4;
+        while(ctr) {
+            counter[idx] = ctr & 0xff;
+            ctr >>= 8;
+            idx--;
+        }
         // for(int i = 0; i < 16; i++) {
         //     std::cout << std::hex << (int) counter[i] << " ";
         // }
         // std::cout << endl;
         encryptBlock(counter, out + p, w);
-        #pragma unroll
+        #pragma GCC unroll 16
         for(int i = 0; i < 16; i++) {
             out[p + i] ^= in[p + i];
         }
-        for(int i = 15; i >= 0; i--) {
-            counter[i]++;
-            if(counter[i]) {
-                break;
-            }
-        }
+        // for(int i = 15; i >= 0; i--) {
+        //     counter[i]++;
+        //     if(counter[i]) {
+        //         break;
+        //     }
+        // }
     }
 
     #ifdef DEBUG

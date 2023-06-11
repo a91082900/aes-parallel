@@ -1,8 +1,11 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <omp.h>
 #define endl '\n'
-#define DEBUG
+// #define DEBUG
+
+#pragma GCC optimize ("unroll-loops")
 
 void rotWord(unsigned char *word);
 void subWord(unsigned char *word);
