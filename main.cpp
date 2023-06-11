@@ -12,7 +12,7 @@ int main() {
         // 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
         // 'i', 'j', 'k','l', 'm', 'n', 'o', 'p'
     };
-    char pl[16] = "ZZZZZZZZZZZZZZZ"; // 128-bit plain text for single block encryption
+    char pl[] = "Hello World!8787"; // 128-bit plain text for single block encryption
     
     unsigned char state[16];
     for(int i = 0; i < 16; i++) {
@@ -20,9 +20,7 @@ int main() {
     }
     encryptBlock(state, key);
 
-    for(int i = 0; i < 16; i++) {
-        cout << hex << (int)state[i] << " ";
-    }
+    decryptBlock(state, key);
     
     return 0;
 }

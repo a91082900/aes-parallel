@@ -132,6 +132,70 @@ void keyExpansion(unsigned char* key, unsigned char* w) {
     std::cout << "---KeyExpansion End---" << endl;
 }
 
+void invSubBytes(unsigned char* state) {
+    #pragma unroll
+    for(int i = 0; i < 16; i++) {
+        state[i] = inv_sbox[state[i]];
+    }
+
+    std::cout << endl << "---InvSubBytes Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---InvSubBytes End---" << endl;
+}
+
+void invShiftRows(unsigned char* state) {
+    unsigned char tmp[16];
+    for(int i = 0; i < 16; i++) {
+        tmp[i] = state[i];
+    }
+
+    state[0] = tmp[0];
+    state[1] = tmp[13];
+    state[2] = tmp[10];
+    state[3] = tmp[7];
+    state[4] = tmp[4];
+    state[5] = tmp[1];
+    state[6] = tmp[14];
+    state[7] = tmp[11];
+    state[8] = tmp[8];
+    state[9] = tmp[5];
+    state[10] = tmp[2];
+    state[11] = tmp[15];
+    state[12] = tmp[12];
+    state[13] = tmp[9];
+    state[14] = tmp[6];
+    state[15] = tmp[3];
+
+    std::cout << endl << "---InvShiftRow Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---InvShiftRow End---" << endl;
+}
+
+void invMixColumns(unsigned char* state) {
+    unsigned char tmp[16];
+    for(int i = 0; i < 16; i++) {
+        tmp[i] = state[i];
+    }
+
+    #pragma unroll
+    for(int i = 0; i < 4; i++) {
+        state[4*i + 0] = GF_14[tmp[4*i + 0]] ^ GF_11[tmp[4*i + 1]] ^ GF_13[tmp[4*i + 2]] ^ GF_9[tmp[4*i + 3]];
+        state[4*i + 1] = GF_9[tmp[4*i + 0]] ^ GF_14[tmp[4*i + 1]] ^ GF_11[tmp[4*i + 2]] ^ GF_13[tmp[4*i + 3]];
+        state[4*i + 2] = GF_13[tmp[4*i + 0]] ^ GF_9[tmp[4*i + 1]] ^ GF_14[tmp[4*i + 2]] ^ GF_11[tmp[4*i + 3]];
+        state[4*i + 3] = GF_11[tmp[4*i + 0]] ^ GF_13[tmp[4*i + 1]] ^ GF_9[tmp[4*i + 2]] ^ GF_14[tmp[4*i + 3]];
+    }
+
+    std::cout << endl << "---InvMixColumn Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---InvMixColumn End---" << endl;
+}
+
 void encryptBlock(unsigned char* state, unsigned char* key) {
     unsigned char w[4 * 4 * 11];
     keyExpansion(key, w);
@@ -146,4 +210,32 @@ void encryptBlock(unsigned char* state, unsigned char* key) {
     subBytes(state);
     shiftRows(state);
     addRoundKey(state, w + 10 * 16);
+
+    std::cout << endl << "---EncryptBlock Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---EncryptBlock End---" << endl;
+}
+
+void decryptBlock(unsigned char* state, unsigned char* key) {
+    unsigned char w[4 * 4 * 11];
+    keyExpansion(key, w);
+
+    addRoundKey(state, w + 10 * 16);
+    for(int i = 9; i > 0; i--) {
+        invShiftRows(state);
+        invSubBytes(state);
+        addRoundKey(state, w + i * 16);
+        invMixColumns(state);
+    }
+    invShiftRows(state);
+    invSubBytes(state);
+    addRoundKey(state, w);
+
+    std::cout << endl << "---DecryptBlock Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---DecryptBlock End---" << endl;
 }
