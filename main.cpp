@@ -29,8 +29,14 @@ int main() {
     for(int i = 0; i < size; i++) {
         in[i] = pl[i];
     }
-    encryptECB(in, out, key, size);
-    decryptECB(out, in, key, size);
+    // encryptECB(in, out, key, size);
+    // decryptECB(out, in, key, size);
+    unsigned char iv[16] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06 ,0x07, 0x08,
+        0x09, 0x0a, 0x0b, 0x0c ,0x0d, 0x0e, 0x0f, 0x10
+    };
+    encryptCBC(in, out, key, iv, size);
+    decryptCBC(out, in, key, iv, size);
     
     return 0;
 }
