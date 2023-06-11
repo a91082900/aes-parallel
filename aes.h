@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cassert>
 #define endl '\n'
 
 void rotWord(unsigned char *word);
@@ -17,6 +18,12 @@ void invShiftRows(unsigned char *state);
 
 void encryptBlock(unsigned char* state, unsigned char* key);
 void decryptBlock(unsigned char* state, unsigned char* key);
+
+void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size);
+void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size);
+
+void encryptCBC(unsigned char* plain, unsigned char* key, unsigned char* iv, unsigned char* cipher);
+void decryptCBC(unsigned char* cipher, unsigned char* key, unsigned char* iv, unsigned char* plain);
 
 const unsigned char rc[11] = {0x00, 0x01, 0x02, 0x04, 0x08,
                               0x10, 0x20, 0x40, 0x80, 0x1b, 0x36};

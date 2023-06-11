@@ -12,15 +12,25 @@ int main() {
         // 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
         // 'i', 'j', 'k','l', 'm', 'n', 'o', 'p'
     };
-    char pl[] = "Hello World!8787"; // 128-bit plain text for single block encryption
+    // char pl[] = "Hello World!8787"; // 128-bit plain text for single block encryption
     
-    unsigned char state[16];
-    for(int i = 0; i < 16; i++) {
-        state[i] = pl[i];
-    }
-    encryptBlock(state, key);
+    // unsigned char state[16];
+    // for(int i = 0; i < 16; i++) {
+    //     state[i] = pl[i];
+    // }
+    // encryptBlock(state, key);
 
-    decryptBlock(state, key);
+    // decryptBlock(state, key);
+
+    string pl = "How are you? I am fine. Thank you!";
+    int size = pl.size();
+    unsigned char in[size];
+    unsigned char out[size + 16];
+    for(int i = 0; i < size; i++) {
+        in[i] = pl[i];
+    }
+    encryptECB(in, out, key, size);
+    decryptECB(out, in, key, size);
     
     return 0;
 }

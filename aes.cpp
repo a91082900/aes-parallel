@@ -239,3 +239,64 @@ void decryptBlock(unsigned char* state, unsigned char* key) {
     }
     std::cout << endl << "---DecryptBlock End---" << endl;
 }
+
+void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size) {
+    int padding = 16 - size % 16;
+    std::cout << "Padding: " << padding << endl;
+    unsigned char last_block[16];
+    
+    int i;
+    for(i = 0; i < 16-padding; i++) {
+        last_block[i] = in[size - 16 + padding + i];
+    }
+    for(; i < 16; i++) {
+        last_block[i] = padding;
+    }
+
+    for(i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)last_block[i] << " ";
+    }
+
+    int p;
+    int full_block_size = size - size % 16;
+    for(p = 0; p < full_block_size; p += 16) {
+        encryptBlock(in + p, key);
+        for(int j = 0; j < 16; j++) {
+            out[p + j] = in[p + j];
+        }
+    }
+    encryptBlock(last_block, key);
+    for(int j = 0; j < 16; j++) {
+        out[p + j] = last_block[j];
+    }
+
+    std::cout << endl << "---EncryptECB Begin---" << endl;
+    for(int i = 0; i < size + padding; i++) {
+        std::cout << std::hex << (int)out[i] << " ";
+    }
+    std::cout << endl << "---EncryptECB End---" << endl;
+}
+
+void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size) {
+    int full_block_size = size - size % 16;
+    int p;
+    for(p = 0; p < full_block_size; p += 16) {
+        decryptBlock(in + p, key);
+        for(int j = 0; j < 16; j++) {
+            out[p + j] = in[p + j];
+        }
+    }
+    decryptBlock(in + p, key);
+    for(int j = 0; j < 16; j++) {
+        out[p + j] = in[p + j];
+    }
+
+    std::cout << endl << "---DecryptECB Begin---" << endl;
+    int padding = out[size];
+    std::cout << "Padding: " << std::dec << padding << endl;
+    assert((padding + size) % 16 == 0);
+    for(int i = 0; i < size + padding; i++) {
+        std::cout << std::hex << (int)out[i] << " ";
+    }
+    std::cout << endl << "---DecryptECB End---" << endl;
+}
