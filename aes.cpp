@@ -196,9 +196,9 @@ void invMixColumns(unsigned char* state) {
     std::cout << endl << "---InvMixColumn End---" << endl;
 }
 
-void encryptBlock(unsigned char* state, unsigned char* key) {
-    unsigned char w[4 * 4 * 11];
-    keyExpansion(key, w);
+void encryptBlock(unsigned char* state, unsigned char* w) {
+    // unsigned char w[4 * 4 * 11];
+    // keyExpansion(key, w);
 
     addRoundKey(state, w);
     for(int i = 1; i < 10; i++) {
@@ -218,9 +218,9 @@ void encryptBlock(unsigned char* state, unsigned char* key) {
     std::cout << endl << "---EncryptBlock End---" << endl;
 }
 
-void decryptBlock(unsigned char* state, unsigned char* key) {
-    unsigned char w[4 * 4 * 11];
-    keyExpansion(key, w);
+void decryptBlock(unsigned char* state, unsigned char* w) {
+    // unsigned char w[4 * 4 * 11];
+    // keyExpansion(key, w);
 
     addRoundKey(state, w + 10 * 16);
     for(int i = 9; i > 0; i--) {
@@ -257,15 +257,18 @@ void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
         std::cout << std::hex << (int)last_block[i] << " ";
     }
 
+    unsigned char w[4 * 4 * 11];
+    keyExpansion(key, w);
+
     int p;
     int full_block_size = size - size % 16;
     for(p = 0; p < full_block_size; p += 16) {
-        encryptBlock(in + p, key);
+        encryptBlock(in + p, w);
         for(int j = 0; j < 16; j++) {
             out[p + j] = in[p + j];
         }
     }
-    encryptBlock(last_block, key);
+    encryptBlock(last_block, w);
     for(int j = 0; j < 16; j++) {
         out[p + j] = last_block[j];
     }
@@ -278,23 +281,27 @@ void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
 }
 
 void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size) {
+    unsigned char w[4 * 4 * 11];
+    keyExpansion(key, w);
+
     int full_block_size = size - size % 16;
     int p;
     for(p = 0; p < full_block_size; p += 16) {
-        decryptBlock(in + p, key);
+        decryptBlock(in + p, w);
         for(int j = 0; j < 16; j++) {
             out[p + j] = in[p + j];
         }
     }
-    decryptBlock(in + p, key);
+    decryptBlock(in + p, w);
     for(int j = 0; j < 16; j++) {
         out[p + j] = in[p + j];
     }
-
-    std::cout << endl << "---DecryptECB Begin---" << endl;
     int padding = out[size];
-    std::cout << "Padding: " << std::dec << padding << endl;
     assert((padding + size) % 16 == 0);
+    
+    std::cout << endl << "---DecryptECB Begin---" << endl;
+    std::cout << "Padding: " << std::dec << padding << endl;
+    
     for(int i = 0; i < size + padding; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
