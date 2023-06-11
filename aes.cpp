@@ -5,11 +5,13 @@ void addRoundKey(unsigned char* state, unsigned char* key) {
         state[i] ^= key[i];
     }
 
+    #ifdef DEBUG
     std::cout << endl << "---AddRoundKey Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---AddRoundKey End---" << endl;
+    #endif
 }
 
 void subBytes(unsigned char* state) {
@@ -17,11 +19,13 @@ void subBytes(unsigned char* state) {
         state[i] = sbox[state[i]];
     }
 
+    #ifdef DEBUG
     std::cout << endl << "---SubBytes Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---SubBytes---" << endl;
+    #endif
 }
 
 void mixColumns(unsigned char* state) {
@@ -45,12 +49,14 @@ void mixColumns(unsigned char* state) {
     state[13] = tmp[12] ^ GF_2[tmp[13]] ^ GF_3[tmp[14]] ^ tmp[15];
     state[14] = tmp[12] ^ tmp[13] ^ GF_2[tmp[14]] ^ GF_3[tmp[15]];
     state[15] = GF_3[tmp[12]] ^ tmp[13] ^ tmp[14] ^ GF_2[tmp[15]];
-    
+
+    #ifdef DEBUG
     std::cout << endl << "---MixColumn Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---MixColumn End---" << endl;
+    #endif
 }
 
 void shiftRows(unsigned char *state) {
@@ -75,12 +81,14 @@ void shiftRows(unsigned char *state) {
     state[13] = tmp[1];
     state[14] = tmp[6];
     state[15] = tmp[11];
-    
+
+    #ifdef DEBUG
     std::cout << endl << "---ShiftRow Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---ShiftRow End---" << endl;
+    #endif
 }
 
 void rotWord(unsigned char *word) {
@@ -121,6 +129,7 @@ void keyExpansion(unsigned char* key, unsigned char* w) {
         }
     }
 
+    #ifdef DEBUG
     std::cout << endl << "---KeyExpansion Begin---" << endl;
     for(int i = 0; i < 11; i++) {
         for(int j = 0; j < 16; j++) {
@@ -128,8 +137,8 @@ void keyExpansion(unsigned char* key, unsigned char* w) {
         }
         std::cout << endl;
     }
-
     std::cout << "---KeyExpansion End---" << endl;
+    #endif
 }
 
 void invSubBytes(unsigned char* state) {
@@ -138,11 +147,13 @@ void invSubBytes(unsigned char* state) {
         state[i] = inv_sbox[state[i]];
     }
 
+    #ifdef DEBUG
     std::cout << endl << "---InvSubBytes Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---InvSubBytes End---" << endl;
+    #endif
 }
 
 void invShiftRows(unsigned char* state) {
@@ -168,11 +179,13 @@ void invShiftRows(unsigned char* state) {
     state[14] = tmp[6];
     state[15] = tmp[3];
 
+    #ifdef DEBUG
     std::cout << endl << "---InvShiftRow Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---InvShiftRow End---" << endl;
+    #endif
 }
 
 void invMixColumns(unsigned char* state) {
@@ -189,11 +202,13 @@ void invMixColumns(unsigned char* state) {
         state[4*i + 3] = GF_11[tmp[4*i + 0]] ^ GF_13[tmp[4*i + 1]] ^ GF_9[tmp[4*i + 2]] ^ GF_14[tmp[4*i + 3]];
     }
 
+    #ifdef DEBUG
     std::cout << endl << "---InvMixColumn Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---InvMixColumn End---" << endl;
+    #endif
 }
 
 void encryptBlock(unsigned char* in, unsigned char* out, unsigned char* w) {
@@ -215,11 +230,13 @@ void encryptBlock(unsigned char* in, unsigned char* out, unsigned char* w) {
     shiftRows(out);
     addRoundKey(out, w + 10 * 16);
 
+    #ifdef DEBUG
     std::cout << endl << "---EncryptBlock Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---EncryptBlock End---" << endl;
+    #endif
 }
 
 void decryptBlock(unsigned char* in, unsigned char* out, unsigned char* w) {
@@ -241,16 +258,17 @@ void decryptBlock(unsigned char* in, unsigned char* out, unsigned char* w) {
     invSubBytes(out);
     addRoundKey(out, w);
 
+    #ifdef DEBUG
     std::cout << endl << "---DecryptBlock Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---DecryptBlock End---" << endl;
+    #endif
 }
 
 void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size) {
     int padding = 16 - size % 16;
-    std::cout << "Padding: " << padding << endl;
     unsigned char last_block[16];
     
     int i;
@@ -259,10 +277,6 @@ void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
     }
     for(; i < 16; i++) {
         last_block[i] = padding;
-    }
-
-    for(i = 0; i < 16; i++) {
-        std::cout << std::hex << (int)last_block[i] << " ";
     }
 
     unsigned char w[4 * 4 * 11];
@@ -275,11 +289,17 @@ void encryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
     }
     encryptBlock(last_block, out + p, w);
 
+    #ifdef DEBUG
+    std::cout << "Padding: " << padding << endl;
+    for(i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)last_block[i] << " ";
+    }
     std::cout << endl << "---EncryptECB Begin---" << endl;
     for(int i = 0; i < size + padding; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---EncryptECB End---" << endl;
+    #endif
 }
 
 void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int size) {
@@ -295,18 +315,18 @@ void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
     int padding = out[size];
     assert((padding + size) % 16 == 0);
 
+    #ifdef DEBUG
     std::cout << endl << "---DecryptECB Begin---" << endl;
     std::cout << "Padding: " << std::dec << padding << endl;
-
     for(int i = 0; i < size + padding; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---DecryptECB End---" << endl;
+    #endif
 }
 
 void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* iv, int size) {
     int padding = 16 - size % 16;
-    std::cout << "Padding: " << padding << endl;
     unsigned char last_block[16];
 
     int i;
@@ -315,10 +335,6 @@ void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     }
     for(; i < 16; i++) {
         last_block[i] = padding;
-    }
-
-    for(i = 0; i < 16; i++) {
-        std::cout << std::hex << (int)last_block[i] << " ";
     }
 
     unsigned char w[4 * 4 * 11];
@@ -333,25 +349,40 @@ void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
             in[j] ^= iv[j];
         }
         encryptBlock(in, out, w);
+        p += 16;
     }
-    for(p = 16; p < full_block_size; p += 16) {
+    for(; p < full_block_size; p += 16) {
         #pragma unroll
         for(int j = 0; j < 16; j++) {
             in[p + j] ^= out[p + j - 16];
         }
         encryptBlock(in + p, out + p, w);
     }
-    #pragma unroll
-    for(int j = 0; j < 16; j++) {
-        last_block[j] ^= out[p + j - 16];
+    if(full_block_size) {
+        #pragma unroll
+        for(int j = 0; j < 16; j++) {
+            last_block[j] ^= out[p + j - 16];
+        }
+    }
+    else {
+        #pragma unroll
+        for(int j = 0; j < 16; j++) {
+            last_block[j] ^= iv[j];
+        }
     }
     encryptBlock(last_block, out + p, w);
 
+    #ifdef DEBUG
+    std::cout << "Padding: " << padding << endl;
+    // for(i = 0; i < 16; i++) {
+    //     std::cout << std::hex << (int)last_block[i] << " ";
+    // }
     std::cout << endl << "---EncryptCBC Begin---" << endl;
     for(int i = 0; i < size + padding; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---EncryptCBC End---" << endl;
+    #endif
 }
 
 void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* iv, int size) {
@@ -366,8 +397,9 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         for(int j = 0; j < 16; j++) {
             out[j] ^= iv[j];
         }
+        p += 16;
     }
-    for(p = 16; p < full_block_size; p += 16) {
+    for(; p < full_block_size; p += 16) {
         decryptBlock(in + p, out + p, w);
         #pragma unroll
         for(int j = 0; j < 16; j++) {
@@ -375,19 +407,70 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         }
     }
     decryptBlock(in + p, out + p, w);
-    #pragma unroll
-    for(int j = 0; j < 16; j++) {
-        out[p + j] ^= in[p - 16 + j];
+    if(full_block_size) {
+        #pragma unroll
+        for(int j = 0; j < 16; j++) {
+            out[p + j] ^= in[p - 16 + j];
+        }
+    }
+    else {
+        #pragma unroll
+        for(int j = 0; j < 16; j++) {
+            out[j] ^= iv[j];    
+        }
     }
 
     int padding = out[size];
+    #ifdef DEBUG
+    std::cout << "size: " << size << endl;
+    std::cout << "Padding: " << std::dec << padding << endl;
+    #endif
     assert((padding + size) % 16 == 0);
 
+    #ifdef DEBUG
     std::cout << endl << "---DecryptCBC Begin---" << endl;
-    std::cout << "Padding: " << std::dec << padding << endl;
-    
     for(int i = 0; i < size + padding; i++) {
         std::cout << std::hex << (int)out[i] << " ";
     }
     std::cout << endl << "---DecryptCBC End---" << endl;
+    #endif
+}
+
+void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size) {
+    // CTR can be done without padding
+    // nonce is 8-byte
+    unsigned char w[4 * 4 * 11];
+    keyExpansion(key, w);
+
+    unsigned char counter[16] = {};
+    for(int i = 0; i < 8; i++) {
+        counter[i] = nonce[i];
+    }
+
+    int p = 0;
+    for(; p < size; p += 16) {
+        // for(int i = 0; i < 16; i++) {
+        //     std::cout << std::hex << (int) counter[i] << " ";
+        // }
+        // std::cout << endl;
+        encryptBlock(counter, out + p, w);
+        #pragma unroll
+        for(int i = 0; i < 16; i++) {
+            out[p + i] ^= in[p + i];
+        }
+        for(int i = 15; i >= 0; i--) {
+            counter[i]++;
+            if(counter[i]) {
+                break;
+            }
+        }
+    }
+
+    #ifdef DEBUG
+    std::cout << endl << "---EncryptCTR Begin---" << endl;
+    for(int i = 0; i < size; i++) {
+        std::cout << std::hex << (int)out[i] << " ";
+    }
+    std::cout << endl << "---EncryptCTR End---" << endl;
+    #endif
 }
