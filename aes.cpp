@@ -1,14 +1,14 @@
 #include "aes.h"
 #ifdef SIMD
     #define addRoundKey addRoundKeySIMD
-    #define mixColumns mixColumnsSIMD
-    #define invMixColumns invMixColumnsSIMD
+    // #define mixColumns mixColumnsSIMD
+    // #define invMixColumns invMixColumnsSIMD
 #else
     #define addRoundKey addRoundKey_
-    #define mixColumns mixColumns_
-    #define invMixColumns invMixColumns_
 #endif
 
+#define mixColumns mixColumns_
+#define invMixColumns invMixColumns_
 
 void addRoundKey_(unsigned char* state, unsigned char* key) {
     #pragma GCC unroll 16
@@ -123,22 +123,14 @@ void mixColumns_(unsigned char* state) {
     for(int i = 0; i < 16; i++) {
         tmp[i] = state[i];
     }
-    state[0] = GF_2[tmp[0]] ^ GF_3[tmp[1]] ^ tmp[2] ^ tmp[3];
-    state[1] = tmp[0] ^ GF_2[tmp[1]] ^ GF_3[tmp[2]] ^ tmp[3];
-    state[2] = tmp[0] ^ tmp[1] ^ GF_2[tmp[2]] ^ GF_3[tmp[3]];
-    state[3] = GF_3[tmp[0]] ^ tmp[1] ^ tmp[2] ^ GF_2[tmp[3]];
-    state[4] = GF_2[tmp[4]] ^ GF_3[tmp[5]] ^ tmp[6] ^ tmp[7];
-    state[5] = tmp[4] ^ GF_2[tmp[5]] ^ GF_3[tmp[6]] ^ tmp[7];
-    state[6] = tmp[4] ^ tmp[5] ^ GF_2[tmp[6]] ^ GF_3[tmp[7]];
-    state[7] = GF_3[tmp[4]] ^ tmp[5] ^ tmp[6] ^ GF_2[tmp[7]];
-    state[8] = GF_2[tmp[8]] ^ GF_3[tmp[9]] ^ tmp[10] ^ tmp[11];
-    state[9] = tmp[8] ^ GF_2[tmp[9]] ^ GF_3[tmp[10]] ^ tmp[11];
-    state[10] = tmp[8] ^ tmp[9] ^ GF_2[tmp[10]] ^ GF_3[tmp[11]];
-    state[11] = GF_3[tmp[8]] ^ tmp[9] ^ tmp[10] ^ GF_2[tmp[11]];
-    state[12] = GF_2[tmp[12]] ^ GF_3[tmp[13]] ^ tmp[14] ^ tmp[15];
-    state[13] = tmp[12] ^ GF_2[tmp[13]] ^ GF_3[tmp[14]] ^ tmp[15];
-    state[14] = tmp[12] ^ tmp[13] ^ GF_2[tmp[14]] ^ GF_3[tmp[15]];
-    state[15] = GF_3[tmp[12]] ^ tmp[13] ^ tmp[14] ^ GF_2[tmp[15]];
+
+    #pragma GCC unroll 4
+    for(int i = 0; i < 4; i++) {
+        state[4*i + 0] = GF_2[tmp[4*i + 0]] ^ GF_3[tmp[4*i + 1]] ^ tmp[4*i + 2] ^ tmp[4*i + 3];
+        state[4*i + 1] = tmp[4*i + 0] ^ GF_2[tmp[4*i + 1]] ^ GF_3[tmp[4*i + 2]] ^ tmp[4*i + 3];
+        state[4*i + 2] = tmp[4*i + 0] ^ tmp[4*i + 1] ^ GF_2[tmp[4*i + 2]] ^ GF_3[tmp[4*i + 3]];
+        state[4*i + 3] = GF_3[tmp[4*i + 0]] ^ tmp[4*i + 1] ^ tmp[4*i + 2] ^ GF_2[tmp[4*i + 3]];
+    }
 
     #ifdef DEBUG
     #pragma omp critical
@@ -539,18 +531,21 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         }
         p += 16;
     }
-    for(; p < full_block_size; p += 16) {
-        decryptBlock(in + p, out + p, w);
+    #ifdef MTHREAD
+    #pragma omp parallel for
+    #endif
+    for(int pi = p; pi < full_block_size; pi += 16) {
+        decryptBlock(in + pi, out + pi, w);
         #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
-            out[p + j] ^= in[p - 16 + j];
+            out[pi + j] ^= in[pi - 16 + j];
         }
     }
-    decryptBlock(in + p, out + p, w);
+    decryptBlock(in + full_block_size, out + full_block_size, w);
     if(full_block_size) {
         #pragma GCC unroll 16
         for(int j = 0; j < 16; j++) {
-            out[p + j] ^= in[p - 16 + j];
+            out[full_block_size + j] ^= in[full_block_size - 16 + j];
         }
     }
     else {
@@ -587,7 +582,9 @@ void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsig
         counter[i] = nonce[i];
     }
 
+    #ifdef MTHREAD
     #pragma omp parallel for firstprivate(counter)
+    #endif
     for(int p = 0; p < size; p += 16) {
         int idx = 15;
         int ctr = p >> 4;

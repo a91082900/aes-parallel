@@ -5,8 +5,9 @@
 #include <thread>
 #include <immintrin.h>
 #define endl '\n'
-#define DEBUG
-// #define SIMD
+// #define DEBUG
+#define SIMD
+#define MTHREAD
 
 #pragma GCC optimize ("unroll-loops")
 
@@ -14,7 +15,7 @@ void rotWord(unsigned char *word);
 void subWord(unsigned char *word);
 void keyExpansion(unsigned char* key, unsigned char* w);
 
-void addRoundKey(unsigned char* state, unsigned char* key);
+void addRoundKey_(unsigned char* state, unsigned char* key);
 void addRoundKeySIMD(unsigned char* state, unsigned char* key);
 void subBytes(unsigned char* state);
 void mixColumns_(unsigned char* state);

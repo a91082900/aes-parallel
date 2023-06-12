@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     if(argc >= 2) {
         size = atoi(argv[1]);
     }
-    // srand(time(NULL));
+    srand(time(NULL));
 
     unsigned char key[16] = {
         0xab, 0x9a, 0x8b, 0x7a, 0x6b, 0x5a, 0x4b, 0x3a,
@@ -42,11 +42,11 @@ int main(int argc, char* argv[]) {
     // encryptECB(in, out, key, size);
     // decryptECB(out, in, key, size);
 
-    encryptCBC(in, out, key, iv, size);
-    decryptCBC(out, in, key, iv, size);
+    // encryptCBC(in, out, key, iv, size);
+    // decryptCBC(out, in, key, iv, size);
     
-    // encryptCTR(in, out, key, iv, size);
-    // encryptCTR(out, in, key, iv, size);
+    encryptCTR(in, out, key, iv, size);
+    encryptCTR(out, in, key, iv, size);
 
     chrono::time_point<chrono::steady_clock> t2 = chrono::steady_clock::now();
     
