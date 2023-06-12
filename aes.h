@@ -2,8 +2,11 @@
 #include <string>
 #include <cassert>
 #include <omp.h>
+#include <thread>
+#include <immintrin.h>
 #define endl '\n'
-// #define DEBUG
+#define DEBUG
+// #define SIMD
 
 #pragma GCC optimize ("unroll-loops")
 
@@ -12,12 +15,15 @@ void subWord(unsigned char *word);
 void keyExpansion(unsigned char* key, unsigned char* w);
 
 void addRoundKey(unsigned char* state, unsigned char* key);
+void addRoundKeySIMD(unsigned char* state, unsigned char* key);
 void subBytes(unsigned char* state);
-void mixColumns(unsigned char* state);
+void mixColumns_(unsigned char* state);
+void mixColumnsSIMD(unsigned char* state);
 void shiftRows(unsigned char *state);
 
 void invSubBytes(unsigned char* state);
-void invMixColumns(unsigned char* state);
+void invMixColumns_(unsigned char* state);
+void invMixColumnsSIMD(unsigned char* state);
 void invShiftRows(unsigned char *state);
 
 void encryptBlock(unsigned char* state, unsigned char* key);

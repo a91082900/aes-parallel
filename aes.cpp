@@ -1,34 +1,124 @@
 #include "aes.h"
+#ifdef SIMD
+    #define addRoundKey addRoundKeySIMD
+    #define mixColumns mixColumnsSIMD
+    #define invMixColumns invMixColumnsSIMD
+#else
+    #define addRoundKey addRoundKey_
+    #define mixColumns mixColumns_
+    #define invMixColumns invMixColumns_
+#endif
 
-void addRoundKey(unsigned char* state, unsigned char* key) {
+
+void addRoundKey_(unsigned char* state, unsigned char* key) {
+    #pragma GCC unroll 16
     for(int i = 0; i < 16; i++) {
         state[i] ^= key[i];
     }
 
     #ifdef DEBUG
+    #pragma omp critical
+    {
     std::cout << endl << "---AddRoundKey Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
+    std::cout << endl << "key:\n";
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)key[i] << " ";
+    }
     std::cout << endl << "---AddRoundKey End---" << endl;
+    }
+    #endif
+}
+
+void addRoundKeySIMD(unsigned char* state, unsigned char* key) {
+    __m128i tmp = _mm_load_si128((__m128i*) state);
+    __m128i tmp2 = _mm_load_si128((__m128i*) key);
+    tmp = _mm_xor_si128(tmp, tmp2);
+    _mm_store_si128((__m128i*) state, tmp);
+
+    #ifdef DEBUG
+    #pragma omp critical
+    {
+    std::cout << endl << "---AddRoundKey Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "key:\n";
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)key[i] << " ";
+    }
+    std::cout << endl << "---AddRoundKey End---" << endl;
+    }
     #endif
 }
 
 void subBytes(unsigned char* state) {
+    #pragma GCC unroll 16
     for(int i = 0; i < 16; i++) {
         state[i] = sbox[state[i]];
     }
 
     #ifdef DEBUG
+    #pragma omp critical
+    {
     std::cout << endl << "---SubBytes Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
-    std::cout << endl << "---SubBytes---" << endl;
+    std::cout << endl << "---SubBytes End---" << endl;
+    }
     #endif
 }
 
-void mixColumns(unsigned char* state) {
+void mixColumnsSIMD(unsigned char *state) {
+    // due to endianness, load reversely
+    __m128i tmp = _mm_set_epi8(
+        GF_3[state[12]], state[12], state[12], GF_2[state[12]],
+        GF_3[state[8]], state[8], state[8], GF_2[state[8]],
+        GF_3[state[4]], state[4], state[4], GF_2[state[4]],
+        GF_3[state[0]], state[0], state[0], GF_2[state[0]]
+    );
+    __m128i tmp2 = _mm_set_epi8(
+        state[13], state[13], GF_2[state[13]], GF_3[state[13]],
+        state[9], state[9], GF_2[state[9]], GF_3[state[9]],
+        state[5], state[5], GF_2[state[5]], GF_3[state[5]],
+        state[1], state[1], GF_2[state[1]], GF_3[state[1]]
+    );
+
+    tmp = _mm_xor_si128(tmp, tmp2);
+
+    __m128i tmp3 = _mm_set_epi8(
+        state[14], GF_2[state[14]], GF_3[state[14]], state[14],
+        state[10], GF_2[state[10]], GF_3[state[10]], state[10],
+        state[6], GF_2[state[6]], GF_3[state[6]], state[6],
+        state[2], GF_2[state[2]], GF_3[state[2]], state[2]
+    );
+
+    __m128i tmp4 = _mm_set_epi8(
+        GF_2[state[15]], GF_3[state[15]], state[15], state[15],
+        GF_2[state[11]], GF_3[state[11]], state[11], state[11],
+        GF_2[state[7]], GF_3[state[7]], state[7], state[7],
+        GF_2[state[3]], GF_3[state[3]], state[3], state[3]
+    );
+
+    tmp3 = _mm_xor_si128(tmp3, tmp4);
+    tmp = _mm_xor_si128(tmp, tmp3);
+    _mm_store_si128((__m128i*) state, tmp);
+    #ifdef DEBUG
+    #pragma omp critical
+    {
+    std::cout << endl << "---MixColumn Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---MixColumn End---" << endl;
+    }
+    #endif
+}
+
+void mixColumns_(unsigned char* state) {
     unsigned char tmp[16];
     for(int i = 0; i < 16; i++) {
         tmp[i] = state[i];
@@ -51,11 +141,14 @@ void mixColumns(unsigned char* state) {
     state[15] = GF_3[tmp[12]] ^ tmp[13] ^ tmp[14] ^ GF_2[tmp[15]];
 
     #ifdef DEBUG
+    #pragma omp critical
+    {
     std::cout << endl << "---MixColumn Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---MixColumn End---" << endl;
+    }
     #endif
 }
 
@@ -83,11 +176,14 @@ void shiftRows(unsigned char *state) {
     state[15] = tmp[11];
 
     #ifdef DEBUG
+    #pragma omp critical
+    {
     std::cout << endl << "---ShiftRow Begin---" << endl;
     for(int i = 0; i < 16; i++) {
         std::cout << std::hex << (int)state[i] << " ";
     }
     std::cout << endl << "---ShiftRow End---" << endl;
+    }
     #endif
 }
 
@@ -188,7 +284,51 @@ void invShiftRows(unsigned char* state) {
     #endif
 }
 
-void invMixColumns(unsigned char* state) {
+void invMixColumnsSIMD(unsigned char* state) {
+        // due to endianness, load reversely
+    __m128i tmp = _mm_set_epi8(
+        GF_11[state[12]], GF_13[state[12]], GF_9[state[12]], GF_14[state[12]],
+        GF_11[state[8]], GF_13[state[8]], GF_9[state[8]], GF_14[state[8]],
+        GF_11[state[4]], GF_13[state[4]], GF_9[state[4]], GF_14[state[4]],
+        GF_11[state[0]], GF_13[state[0]], GF_9[state[0]], GF_14[state[0]]
+    );
+    __m128i tmp2 = _mm_set_epi8(
+        GF_13[state[13]], GF_9[state[13]], GF_14[state[13]], GF_11[state[13]],
+        GF_13[state[9]], GF_9[state[9]], GF_14[state[9]], GF_11[state[9]],
+        GF_13[state[5]], GF_9[state[5]], GF_14[state[5]], GF_11[state[5]],
+        GF_13[state[1]], GF_9[state[1]], GF_14[state[1]], GF_11[state[1]]
+    );
+
+    tmp = _mm_xor_si128(tmp, tmp2);
+
+    __m128i tmp3 = _mm_set_epi8(
+        GF_9[state[14]], GF_14[state[14]], GF_11[state[14]], GF_13[state[14]],
+        GF_9[state[10]], GF_14[state[10]], GF_11[state[10]], GF_13[state[10]],
+        GF_9[state[6]], GF_14[state[6]], GF_11[state[6]], GF_13[state[6]],
+        GF_9[state[2]], GF_14[state[2]], GF_11[state[2]], GF_13[state[2]]
+    );
+
+    __m128i tmp4 = _mm_set_epi8(
+        GF_14[state[15]], GF_11[state[15]], GF_13[state[15]], GF_9[state[15]],
+        GF_14[state[11]], GF_11[state[11]], GF_13[state[11]], GF_9[state[11]],
+        GF_14[state[7]], GF_11[state[7]], GF_13[state[7]], GF_9[state[7]],
+        GF_14[state[3]], GF_11[state[3]], GF_13[state[3]], GF_9[state[3]]
+    );
+
+    tmp3 = _mm_xor_si128(tmp3, tmp4);
+    tmp = _mm_xor_si128(tmp, tmp3);
+    _mm_store_si128((__m128i*) state, tmp);
+
+    #ifdef DEBUG
+    std::cout << endl << "---InvMixColumn Begin---" << endl;
+    for(int i = 0; i < 16; i++) {
+        std::cout << std::hex << (int)state[i] << " ";
+    }
+    std::cout << endl << "---InvMixColumn End---" << endl;
+    #endif
+}
+
+void invMixColumns_(unsigned char* state) {
     unsigned char tmp[16];
     for(int i = 0; i < 16; i++) {
         tmp[i] = state[i];

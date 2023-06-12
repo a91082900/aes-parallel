@@ -42,11 +42,11 @@ int main(int argc, char* argv[]) {
     // encryptECB(in, out, key, size);
     // decryptECB(out, in, key, size);
 
-    // encryptCBC(in, out, key, iv, size);
-    // decryptCBC(out, in, key, iv, size);
+    encryptCBC(in, out, key, iv, size);
+    decryptCBC(out, in, key, iv, size);
     
-    encryptCTR(in, out, key, iv, size);
-    encryptCTR(out, in, key, iv, size);
+    // encryptCTR(in, out, key, iv, size);
+    // encryptCTR(out, in, key, iv, size);
 
     chrono::time_point<chrono::steady_clock> t2 = chrono::steady_clock::now();
     
