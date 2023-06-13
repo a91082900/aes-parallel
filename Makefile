@@ -1,4 +1,4 @@
-CXX = g++
+CXX = mpicxx
 CXXFLAGS = -Wall -Wextra -g -O3 -std=c++17 -pthread -fopenmp
 TARGET = aes
 

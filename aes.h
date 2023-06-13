@@ -8,6 +8,7 @@
 // #define DEBUG
 #define SIMD
 #define MTHREAD
+#define MPI
 
 #pragma GCC optimize ("unroll-loops")
 
@@ -36,7 +37,7 @@ void decryptECB(unsigned char* in, unsigned char* out, unsigned char* key, int s
 void encryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* iv, int size);
 void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* iv, int size);
 
-void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size);
+void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size, int counter_init);
 // void decryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size);
 
 const unsigned char rc[11] = {0x00, 0x01, 0x02, 0x04, 0x08,

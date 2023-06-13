@@ -571,11 +571,12 @@ void decryptCBC(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     #endif
 }
 
-void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size) {
+void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsigned char* nonce, int size, int counter_init) {
     // CTR can be done without padding
     // nonce is 8-byte
     unsigned char w[4 * 4 * 11];
     keyExpansion(key, w);
+    // std::cout << "counter_init = " << std::dec << counter_init << endl;
 
     unsigned char counter[16] = {};
     for(int i = 0; i < 8; i++) {
@@ -587,16 +588,20 @@ void encryptCTR(unsigned char* in, unsigned char* out, unsigned char* key, unsig
     #endif
     for(int p = 0; p < size; p += 16) {
         int idx = 15;
-        int ctr = p >> 4;
+        int ctr = (p >> 4) + counter_init;
         while(ctr) {
             counter[idx] = ctr & 0xff;
             ctr >>= 8;
             idx--;
         }
-        // for(int i = 0; i < 16; i++) {
-        //     std::cout << std::hex << (int) counter[i] << " ";
+
+        // #pragma omp critical
+        // {
+        //     for(int i = 0; i < 16; i++) {
+        //         std::cout << std::hex << (int) counter[i] << " ";
+        //     }
+        //     std::cout << endl;
         // }
-        // std::cout << endl;
         encryptBlock(counter, out + p, w);
         #pragma GCC unroll 16
         for(int i = 0; i < 16; i++) {
